@@ -1,0 +1,109 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Role {
+  ADMIN
+  SINDICO
+  PORTEIRO
+  MORADOR
+}
+
+enum PortariaEventType {
+  VISITANTE
+  ENCOMENDA
+  PRESTADOR_SERVICO
+}
+
+enum PortariaEventStatus {
+  PENDENTE
+  AUTORIZADO
+  NEGADO
+  FINALIZADO
+}
+
+model User {
+  id              String          @id @default(uuid())
+  name            String
+  email           String          @unique
+  password        String
+  phone           String?
+  role            Role            @default(MORADOR)
+  fcmToken        String?         @map("fcm_token") @db.VarChar(512)
+  condominiumId   String?         @map("condominium_id")
+  condominium     Condominium?    @relation(fields: [condominiumId], references: [id], onDelete: SetNull)
+  apartmentId     String?         @map("apartment_id")
+  apartment       Apartment?      @relation(fields: [apartmentId], references: [id], onDelete: SetNull)
+  respondedEvents PortariaEvent[] @relation("EventResponder")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@index([condominiumId])
+  @@index([apartmentId])
+  @@map("users")
+}
+
+model Condominium {
+  id               String          @id @default(uuid())
+  name             String
+  cnpj             String          @unique @db.VarChar(14)
+  street           String
+  number           String
+  district         String
+  city             String
+  state            String          @db.VarChar(2)
+  zipCode          String          @map("zip_code") @db.VarChar(8)
+  condlyPortariaId String?         @unique @map("condly_portaria_id")
+  apartments       Apartment[]
+  users            User[]
+  portariaEvents   PortariaEvent[]
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  @@map("condominiums")
+}
+
+model Apartment {
+  id             String          @id @default(uuid())
+  number         String
+  block          String          @default("")
+  floor          Int?
+  condominiumId  String          @map("condominium_id")
+  condominium    Condominium     @relation(fields: [condominiumId], references: [id], onDelete: Cascade)
+  residents      User[]
+  portariaEvents PortariaEvent[]
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  @@unique([condominiumId, block, number])
+  @@map("apartments")
+}
+
+model PortariaEvent {
+  id             String              @id @default(uuid())
+  externalId     String?             @unique @map("external_id")
+  type           PortariaEventType
+  status         PortariaEventStatus @default(PENDENTE)
+  personName     String?             @map("person_name")
+  personDocument String?             @map("person_document")
+  description    String?             @db.Text
+  condominiumId  String              @map("condominium_id")
+  condominium    Condominium         @relation(fields: [condominiumId], references: [id], onDelete: Cascade)
+  apartmentId    String              @map("apartment_id")
+  apartment      Apartment           @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  respondedById  String?             @map("responded_by_id")
+  respondedBy    User?               @relation("EventResponder", fields: [respondedById], references: [id], onDelete: SetNull)
+  respondedAt    DateTime?           @map("responded_at")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+
+  @@index([apartmentId, status])
+  @@index([condominiumId])
+  @@map("portaria_events")
+}
