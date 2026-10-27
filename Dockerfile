@@ -10,7 +10,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
-COPY package.json prisma.config.ts ./
+COPY --from=build /app/src/generated ./src/generated
+COPY package.json prisma.config.ts tsconfig.json ./
 COPY prisma ./prisma
 EXPOSE 3000
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]

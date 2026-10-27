@@ -73,8 +73,11 @@ O app do morador registra o token de push em `PATCH /api/users/me/fcm-token`.
 
 ## Firebase
 
-Preencha `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL` e `FIREBASE_PRIVATE_KEY` com os dados da
-service account. Sem essas variáveis a API funciona normalmente, apenas sem notificações push.
+1. No [Console do Firebase](https://console.firebase.google.com), abra ⚙️ **Configurações do projeto → Contas de serviço → Gerar nova chave privada**.
+2. Salve o JSON baixado como `credentials/firebase-service-account.json` (a pasta é ignorada pelo git e montada no container).
+3. Para usar outro caminho, ajuste `FIREBASE_SERVICE_ACCOUNT_PATH`.
+
+Sem o arquivo a API funciona normalmente, apenas sem notificações push.
 
 ## Scripts úteis
 
