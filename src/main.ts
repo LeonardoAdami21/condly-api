@@ -2,7 +2,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule, ObserveInstrument } from './app.module';
-import { API_KEY_HEADER } from './auth/guards/api-key.guard';
+import { API_KEY_HEADER } from './modules/portaria/infrastructure/auth/api-key.guard';
+import { DomainErrorFilter } from './shared/infrastructure/http/domain-error.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -12,6 +13,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api', { exclude: ['health'] });
   app.enableCors();
   app.enableShutdownHooks();
+  app.useGlobalFilters(new DomainErrorFilter());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

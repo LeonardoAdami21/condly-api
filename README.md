@@ -4,6 +4,29 @@ Gerenciamento de condomínio e apartamentos com integração com o sistema de po
 
 **Stack:** Nest.js 12 · Prisma 7 (MySQL) · JWT · Swagger · Firebase Cloud Messaging · Docker
 
+## Arquitetura (Clean Architecture + DDD)
+
+```
+src/
+├── shared/                  # Shared kernel
+│   ├── domain/              # Entity base, erros de domínio, Role, paginação
+│   ├── application/         # Actor (usuário autenticado), helpers de paginação
+│   └── infrastructure/      # Prisma, Firebase, filtro de erros, decorators HTTP
+└── modules/                 # Bounded contexts
+    ├── condominium/         # Condomínios e apartamentos
+    ├── identity/            # Usuários e autenticação
+    └── portaria/            # Eventos da portaria e integração Condly
+        ├── domain/          # Entidades, value objects, regras e contratos de repositório
+        ├── application/     # Casos de uso e portas (interfaces) para a infraestrutura
+        ├── infrastructure/  # Adapters: repositórios Prisma, Firebase, JWT, bcrypt
+        └── presentation/    # Controllers, DTOs (validação/Swagger) e presenters
+```
+
+- A dependência aponta sempre para dentro: `presentation → application → domain`. A `infrastructure` implementa os contratos (classes abstratas) do domínio/aplicação e é ligada no módulo Nest.
+- Regras de negócio ficam nas entidades e value objects (ex.: `PortariaEvent.respond()`, `Cnpj`, `User` exige apartamento para moradores).
+- Erros de domínio (`NotFoundError`, `ForbiddenError`...) são convertidos em HTTP pelo `DomainErrorFilter`.
+- Testes unitários usam repositórios em memória (`test/repositories`) e não precisam de banco.
+
 ## Como rodar
 
 ```bash
