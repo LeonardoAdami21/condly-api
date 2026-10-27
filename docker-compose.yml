@@ -17,17 +17,5 @@ services:
       timeout: 5s
       retries: 10
 
-  api:
-    build: .
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}
-    ports:
-      - '${PORT:-3000}:3000'
-    depends_on:
-      mysql:
-        condition: service_healthy
-
 volumes:
   mysql_data:
