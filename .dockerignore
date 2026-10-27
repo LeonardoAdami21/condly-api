@@ -4,3 +4,5 @@ src/generated
 .env
 .git
 coverage
+credentials
+*-firebase-adminsdk-*.json

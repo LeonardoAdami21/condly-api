@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { App, cert, getApps, initializeApp } from 'firebase-admin/app';
@@ -17,24 +19,23 @@ export class FirebaseMessagingService implements OnModuleInit {
   constructor(private readonly config: ConfigService) {}
 
   onModuleInit() {
-    const projectId = this.config.get<string>('FIREBASE_PROJECT_ID');
-    const clientEmail = this.config.get<string>('FIREBASE_CLIENT_EMAIL');
-    const privateKey = this.config
-      .get<string>('FIREBASE_PRIVATE_KEY')
-      ?.replace(/\\n/g, '\n');
+    const credentialsPath = resolve(
+      this.config.get<string>(
+        'FIREBASE_SERVICE_ACCOUNT_PATH',
+        'credentials/firebase-service-account.json',
+      ),
+    );
 
-    if (!projectId || !clientEmail || !privateKey) {
+    if (!existsSync(credentialsPath)) {
       this.logger.warn(
-        'Credenciais do Firebase ausentes: notificações push desativadas',
+        `Service account do Firebase não encontrada em ${credentialsPath}: notificações push desativadas`,
       );
       return;
     }
 
     this.app =
-      getApps()[0] ??
-      initializeApp({
-        credential: cert({ projectId, clientEmail, privateKey }),
-      });
+      getApps()[0] ?? initializeApp({ credential: cert(credentialsPath) });
+    this.logger.log(`Firebase inicializado com ${credentialsPath}`);
   }
 
   get enabled(): boolean {
@@ -53,7 +54,7 @@ export class FirebaseMessagingService implements OnModuleInit {
       });
       if (response.failureCount > 0) {
         this.logger.warn(
-          `${response.failureCount}/${tokens.length} notificações falharam`,
+          `${response.failureCount}/${tokens.length} as notificações falharam`,
         );
       }
     } catch (error) {
